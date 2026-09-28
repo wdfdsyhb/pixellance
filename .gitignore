@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+
+# Local scan artifacts
+reports/
+.pixellance-cache/
+*.nmap
+*.gnmap
+*.xml
+
+# Local VM/SSH helper scripts (contain lab credentials, keep out of VCS)
+vmctl.py
+vm-*.sh
+vm-*.py
+
+# Environment
+.env
