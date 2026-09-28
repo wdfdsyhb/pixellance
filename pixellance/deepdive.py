@@ -26,6 +26,7 @@ DEFAULT_BUDGET = 50000     # total LLM tokens (in+out)
 DEFAULT_TURNS = 8
 TOOL_OUTPUT_LIMIT = 2500   # chars of tool output fed back to the LLM
 LLM_TIMEOUT = 900          # seconds per LLM call (slow local models)
+MAX_NO_TOOL_TURNS = 2      # force-finish if model skips tools this many turns
 
 # NOTE: local 7B models ( Ollama ) verify the ARCHITECTURE but are too
 # slow for full PoC loops (each turn ~3-8 min). For production runs,
@@ -255,6 +256,7 @@ class DeepDiveAgent:
                    "evidence": "budget or turn limit reached",
                    "repro_steps": "", "tokens_used": 0, "turns": 0}
         started = time.time()
+        no_tool_streak = 0
 
         for turn in range(1, self.max_turns + 1):
             if self._context_full(messages):
@@ -277,8 +279,16 @@ class DeepDiveAgent:
             tool_calls = msg.get("tool_calls") or []
 
             if not tool_calls:
-                # plain answer without tool call — if context still has
-                # room, nudge once; otherwise force finish to avoid overflow
+                # plain answer without tool call
+                no_tool_streak += 1
+                if no_tool_streak >= MAX_NO_TOOL_TURNS:
+                    # model drifted to text mode — stop before wasting budget
+                    verdict["evidence"] = (
+                        "model did not use tools for " +
+                        str(no_tool_streak) + " consecutive turns "
+                        "(stronger model recommended)")[:300]
+                    break
+                # one nudge allowed if context has room
                 if not self._context_full(messages):
                     content = msg.get("content", "")
                     if content:
@@ -288,10 +298,12 @@ class DeepDiveAgent:
                                          "Use a tool call (http_request, "
                                          "nmap_script, or finish)."})
                         continue
-                # context full or empty reply → stop
-                verdict["evidence"] = ("context limit reached or model "
-                                       "declined to use tools after nudge")[:300]
+                # context full → stop
+                verdict["evidence"] = (
+                    "context limit reached or model declined to use tools "
+                    "after nudge")[:300]
                 break
+            no_tool_streak = 0   # reset on any tool use
 
             messages.append(msg)
             finished = False
