@@ -3,6 +3,7 @@
 Now uses HexStrike HTTP API as tool execution backend.
 """
 import argparse
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -267,6 +268,28 @@ def cmd_handoff(args, client: HexStrikeClient, state: ScanState):
         print("\n" + build_markdown(workspace))
 
 
+def cmd_deepdive(args, client: HexStrikeClient, state: ScanState):
+    """Bounded agent deep-dive on one high-value finding (Path B)."""
+    from .deepdive import run_deepdive, DEFAULT_LLM_URL, DEFAULT_MODEL
+    workspace = Path(args.workspace).resolve()
+    if not workspace.exists():
+        print(f"[!] Workspace not found: {workspace}")
+        sys.exit(1)
+    if not args.cve:
+        print("[!] --cve is required (e.g. --cve CVE-2021-41773)")
+        sys.exit(1)
+    if not args.target:
+        print("[!] --target is required (the host that owns the finding)")
+        sys.exit(1)
+    run_deepdive(
+        workspace, args.cve, args.target, client,
+        llm_url=args.llm or DEFAULT_LLM_URL,
+        model=args.model or DEFAULT_MODEL,
+        api_key=os.environ.get("DEEPDIVE_API_KEY", ""),
+        budget=args.budget, max_turns=args.turns,
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="pixellance",
@@ -342,6 +365,24 @@ def main():
     p_hand.add_argument("--print", action="store_true", dest="print",
                         help="Print the task markdown to stdout")
 
+    # --- deepdive (Path B) ---
+    p_dd = sub.add_parser("deepdive",
+                          help="Bounded agent deep-dive on ONE finding")
+    p_dd.add_argument("workspace", help="Path to scan workspace")
+    p_dd.add_argument("--cve", default=None,
+                      help="CVE id to verify (e.g. CVE-2021-41773)")
+    p_dd.add_argument("--target", default=None,
+                      help="Host that owns the finding (scope-locked)")
+    p_dd.add_argument("--llm", default=None,
+                      help="OpenAI-compatible base URL "
+                           "(default: local Ollama :11434/v1)")
+    p_dd.add_argument("--model", default=None,
+                      help="Model name (default: qwen2.5:7b)")
+    p_dd.add_argument("--budget", type=int, default=50000,
+                      help="Max total LLM tokens (default 50000)")
+    p_dd.add_argument("--turns", type=int, default=8,
+                      help="Max agent turns (default 8)")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -368,6 +409,8 @@ def main():
             cmd_cve(args, client, state)
         elif args.command == "handoff":
             cmd_handoff(args, client, state)
+        elif args.command == "deepdive":
+            cmd_deepdive(args, client, state)
     finally:
         state.close()
 

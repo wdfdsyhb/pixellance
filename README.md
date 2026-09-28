@@ -62,7 +62,7 @@ pixellance rerun reports/scan-2026-01-01-120000
 pixellance cve reports/scan-2026-01-01-120000
 ```
 
-## 七个子命令
+## 八个子命令
 
 | 子命令 | 作用 |
 |--------|------|
@@ -70,9 +70,37 @@ pixellance cve reports/scan-2026-01-01-120000
 | `history` | 列出历史扫描会话（SQLite 持久化） |
 | `session` | 查看某次会话的主机/端口/触发器/发现 |
 | `rerun` | 对已有工作区重跑触发器 |
-| `report` | 生成报告 + 启动本地面板 |
+| `report` | 报告 + 启动本地面板 |
 | `cve` | 对已有工作区做 CVE 关联 |
 | `handoff` | 工作区 → [PentAGI](docs/PENTAGI.md) 任务简报（侦察前端→自主深挖后端） |
+| `deepdive` | 限定范围 agent 深挖单个发现（Path B，工具白名单+花费上界+目标锁死） |
+
+## 深挖模式（Path B：限定范围 agent）
+
+当扫描发现高价值目标（KEV CVE、ms17_010 阳性），`deepdive` 启动一个
+**有严格边界的 agent 循环**，只深挖这一个发现：
+
+```bash
+# 本地 7B 验证架构（慢，每轮 3-8 分钟）
+pixellance deepdive reports/lab --cve CVE-2021-41773 --target 192.168.98.1
+
+# GLM API 生产跑（秒级完成）
+DEEPDIVE_API_KEY=your-key pixellance deepdive reports/lab \
+  --cve CVE-2021-41773 --target 192.168.98.1 \
+  --llm https://open.bigmodel.cn/api/paas/v4 --model glm-4.5
+```
+
+**三条硬边界：**
+
+| 边界 | 实现 |
+|------|------|
+| 目标锁死 | 每个工具调用的 URL/主机必须等于 `--target`，否则拒绝 |
+| 工具白名单 | 仅 `http_request` + `nmap_script` + `finish`，无 shell 逃逸 |
+| 花费上界 | token 预算（默认 50k）AND 轮数上限（默认 8），任一触发即停 |
+
+产出 `deepdive-<CVE>.json`：verdict（confirmed/not_vulnerable/inconclusive）
++ 证据 + 复现步骤。实测中工具执行路径（HexStrike http-framework 直达靶标）
+和上下文守卫生效，7B 本地模型因推理慢触发超时——**生产用 GLM API**。
 
 ## PentAGI 联动（handoff）
 
