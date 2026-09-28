@@ -62,7 +62,7 @@ pixellance rerun reports/scan-2026-01-01-120000
 pixellance cve reports/scan-2026-01-01-120000
 ```
 
-## 六个子命令
+## 七个子命令
 
 | 子命令 | 作用 |
 |--------|------|
@@ -72,6 +72,20 @@ pixellance cve reports/scan-2026-01-01-120000
 | `rerun` | 对已有工作区重跑触发器 |
 | `report` | 生成报告 + 启动本地面板 |
 | `cve` | 对已有工作区做 CVE 关联 |
+| `handoff` | 工作区 → [PentAGI](docs/PENTAGI.md) 任务简报（侦察前端→自主深挖后端） |
+
+## PentAGI 联动（handoff）
+
+PixelLance 做确定性侦察 + CVE 关联，[PentAGI](https://github.com/vxcontrol/pentagi) 做 LLM 自主深挖。
+`handoff` 把扫描结果变成事实驱动型任务简报，让 PentAGI 的 generator 跳过盲探阶段：
+
+```bash
+pixellance scan targets.txt --cve --shodan
+pixellance handoff reports/corp --print   # 生成简报 + 上下文 JSON
+```
+
+简报含严格 scope 清单、技术指纹、KEV/CVSS/EPSS 排序的 CVE 表、非破坏性验证指令。
+部署与 GLM provider 配置见 [docs/PENTAGI.md](docs/PENTAGI.md)。
 
 ## 智能模块
 

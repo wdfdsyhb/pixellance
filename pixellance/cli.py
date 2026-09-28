@@ -250,6 +250,23 @@ def cmd_cve(args, client: HexStrikeClient, state: ScanState):
                   + flag_str + " ← " + f.get("query", ""))
 
 
+def cmd_handoff(args, client: HexStrikeClient, state: ScanState):
+    """Convert workspace into a PentAGI flow briefing."""
+    from .handoff import make_handoff, build_markdown
+    workspace = Path(args.workspace).resolve()
+    if not workspace.exists():
+        print(f"[!] Workspace not found: {workspace}")
+        sys.exit(1)
+    outdir = Path(args.outdir).resolve() if args.outdir else workspace
+    md_path, ctx_path = make_handoff(workspace, outdir)
+    print(f"[*] Task briefing: {md_path}")
+    print(f"[*] Context JSON:  {ctx_path}")
+    print(f"[*] Upload flow:   POST /api/v1/flows {{input: task md, "
+          f"provider: glm}} + attach context JSON as resource")
+    if args.print:
+        print("\n" + build_markdown(workspace))
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="pixellance",
@@ -316,6 +333,15 @@ def main():
     p_cve = sub.add_parser("cve", help="Correlate existing workspace with NVD/KEV")
     p_cve.add_argument("workspace", help="Path to scan workspace")
 
+    # --- handoff ---
+    p_hand = sub.add_parser("handoff",
+                            help="Convert workspace into a PentAGI flow briefing")
+    p_hand.add_argument("workspace", help="Path to scan workspace")
+    p_hand.add_argument("-o", "--outdir", default=None,
+                        help="Output dir (default: inside workspace)")
+    p_hand.add_argument("--print", action="store_true", dest="print",
+                        help="Print the task markdown to stdout")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -340,6 +366,8 @@ def main():
             cmd_report(args, client, state)
         elif args.command == "cve":
             cmd_cve(args, client, state)
+        elif args.command == "handoff":
+            cmd_handoff(args, client, state)
     finally:
         state.close()
 

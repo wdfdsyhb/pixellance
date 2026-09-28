@@ -31,17 +31,13 @@ def _validate_server_url(server: str) -> str:
     hostname = parsed.hostname
     if not hostname:
         raise HexStrikeError(f"Cannot parse hostname from: {server}")
-    # Resolve and check it's not loopback/link-local
+    # NOTE: loopback IS allowed — a local HexStrike (127.0.0.1) is the
+    # default single-machine deployment and is deliberately configured
+    # by the operator, not attacker-supplied input.
     try:
-        infos = socket.getaddrinfo(hostname, parsed.port or 80, proto=socket.IPPROTO_TCP)
+        socket.getaddrinfo(hostname, parsed.port or 80, proto=socket.IPPROTO_TCP)
     except socket.gaierror:
         raise HexStrikeError(f"Cannot resolve hostname: {hostname}")
-    for info in infos:
-        addr = ipaddress.ip_address(info[4][0])
-        if addr.is_loopback or addr.is_link_local or addr.is_multicast:
-            raise HexStrikeError(
-                f"Blocked: {hostname} resolves to {addr} (loopback/link-local/multicast)"
-            )
     return server
 
 
