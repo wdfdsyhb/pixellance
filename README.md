@@ -99,8 +99,12 @@ DEEPDIVE_API_KEY=your-key pixellance deepdive reports/lab \
 | 花费上界 | token 预算（默认 50k）AND 轮数上限（默认 8），任一触发即停 |
 
 产出 `deepdive-<CVE>.json`：verdict（confirmed/not_vulnerable/inconclusive）
-+ 证据 + 复现步骤。实测中工具执行路径（HexStrike http-framework 直达靶标）
-和上下文守卫生效，7B 本地模型因推理慢触发超时——**生产用 GLM API**。
++ 证据 + 复现步骤。
+
+实测发现：**7B 本地模型在多轮 ReAct 循环中会漂移到文本模式**（70 分钟
+7 轮却 0 次工具调用），因此加了快速失败防护——连续 2 轮无工具调用
+即终止并诚实报告"推荐更强模型"。**生产环境请使用 GLM API 或
+14B+ 模型**，deepdive 在强模型上单轮秒级完成。
 
 ## PentAGI 联动（handoff）
 
