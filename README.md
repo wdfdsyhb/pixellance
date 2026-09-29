@@ -75,6 +75,31 @@ pixellance cve reports/scan-2026-01-01-120000
 | `handoff` | 工作区 → [PentAGI](docs/PENTAGI.md) 任务简报（侦察前端→自主深挖后端） |
 | `deepdive` | 限定范围 agent 深挖单个发现（Path B，工具白名单+花费上界+目标锁死） |
 
+## MCP Server（让 Agent 直接驱动扫描）
+
+8 个子命令已全部包装为 MCP 工具，任何支持 MCP 的 agent（ZCode / Claude Code / Codex 等）可以直接调用：
+
+```bash
+# 启动（stdio 模式）
+pixellance-mcp
+```
+
+MCP 客户端配置示例（ZCode / Claude Code 通用）：
+
+```json
+{
+  "mcpServers": {
+    "pixellance": {
+      "command": "pixellance-mcp"
+    }
+  }
+}
+```
+
+暴露的工具：`pixellance_scan` / `pixellance_history` / `pixellance_session` / `pixellance_rerun` / `pixellance_report` / `pixellance_cve` / `pixellance_handoff` / `pixellance_deepdive`。
+
+设计要点：每个工具都是 CLI 子进程包装，health check、范围守卫、状态管理走同一套代码路径；`scan` 与 `deepdive` 标注为长任务（30 分钟上限），输出超 50KB 自动截断。
+
 ## 深挖模式（Path B：限定范围 agent）
 
 当扫描发现高价值目标（KEV CVE、ms17_010 阳性），`deepdive` 启动一个
