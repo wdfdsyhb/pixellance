@@ -8,7 +8,7 @@ setup(
     python_requires=">=3.8",
     install_requires=[
         "requests>=2.28",
-        "fastmcp>=2.0",
+        "fastmcp>=2.0,<3",
     ],
     entry_points={
         "console_scripts": [
