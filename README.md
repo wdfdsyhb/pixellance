@@ -1,6 +1,8 @@
-# PixelLance
+# pixellance · 端口触发式渗透编排器
 
-> Port-triggered pentest orchestration — inspired by [leebaird/discover](https://github.com/leebaird/discover), rebuilt in Python on top of the [HexStrike AI](https://github.com/0x4m4/hexstrike-ai) tool server.
+> 给一份 targets.txt，自动按开放端口触发对应工具，CVE 关联按 KEV/EPSS 排序，结果落成本地 Web 报告。
+>
+> English: Port-triggered pentest orchestration — inspired by [leebaird/discover](https://github.com/leebaird/discover), rebuilt in Python on top of the [HexStrike AI](https://github.com/0x4m4/hexstrike-ai) tool server.
 
 **发现什么端口 → 自动跑对应工具 → 结果驱动下一步 → CVE 关联排序。**
 
@@ -205,3 +207,9 @@ engine.register(PortTrigger(
 ## 定位声明
 
 仅供授权渗透测试与安全教育用途。请勿对未授权目标使用。
+
+---
+
+## English
+
+Full English documentation: [README_EN.md](README_EN.md)
