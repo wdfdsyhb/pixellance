@@ -1,4 +1,5 @@
 # pixellance · 端口触发式渗透编排器
+[![CI](https://github.com/wdfdsyhb/pixellance/actions/workflows/tests.yml/badge.svg)](https://github.com/wdfdsyhb/pixellance/actions/workflows/tests.yml)
 
 > 给一份 targets.txt，自动按开放端口触发对应工具，CVE 关联按 KEV/EPSS 排序，结果落成本地 Web 报告。
 >
