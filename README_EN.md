@@ -1,4 +1,5 @@
 # PixelLance · Port-Triggered Pentest Orchestration
+[![CI](https://github.com/wdfdsyhb/pixellance/actions/workflows/tests.yml/badge.svg)](https://github.com/wdfdsyhb/pixellance/actions/workflows/tests.yml)
 
 > Feed it a targets.txt: it triggers the right tools per open port, correlates CVEs ranked by KEV/EPSS, and lands everything in a local web report.
 >
